@@ -5,6 +5,7 @@ require "dust_it/version"
 require "dust_it/html_parser"
 require "dust_it/pinger"
 require "dust_it/generator"
+require 'pry'
 
 module DustIt
   class << self
@@ -15,7 +16,7 @@ module DustIt
     def start
       initialize
       puts "Running DustIt v0.1 !".blue
-      100000.times do
+      1000000.times do
         flow
       end
     end
@@ -26,17 +27,17 @@ module DustIt
       url = @gen.url
       res = get(url)
       result = analyse(res)
-      keep(result, url)
+      keep(result, res.uri)
     end
 
     def get(url)
       Pinger.new(url)
     end
 
-    def analyse(res)      
-      return nil unless res.state        
+    def analyse(res)
+      return nil unless res.state
+      return :nothing if res.body.encode('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '').include?("pas disponible")
       html = HTMLParser.new(res.body).parse
-      return :nothing if html.title == "YouTube"
       html.css(".privacy-icon").present? ? :private : :public
     end
 
@@ -60,7 +61,7 @@ module DustIt
       @ite += 1
       @mem_pri ||= 0
       @mem_pub ||= 0
-      if @ite >= 1000
+      if @ite >= 10
         total = @count[:nothing] + @count[:public] + @count[:private]
         puts "#{total} vidéos analysées..."
         @ite = 0

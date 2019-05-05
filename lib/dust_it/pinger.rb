@@ -1,6 +1,6 @@
 module DustIt
   class Pinger
-    attr_reader :response
+    attr_reader :response, :uri
 
     def initialize(url)
       @uri = URI(url)
@@ -18,7 +18,12 @@ module DustIt
     private
 
     def ping
-      @response = Net::HTTP.get_response(@uri)
-    end  
+      begin
+        @response = Net::HTTP.get_response(@uri.is_a?(URI) ? @uri : URI.parse(@uri))
+        @uri = @response['location']
+      end while @response.is_a?(Net::HTTPRedirection)
+
+      @response
+    end
   end
 end
